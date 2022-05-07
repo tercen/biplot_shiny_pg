@@ -24,66 +24,128 @@ server <- shinyServer(
     
     dataInput <- reactive({
       getValues(session)
-    })  
+    })
+    
+    dataColors = reactive({
+      getColors(session)
+    })
+    
     
     observe({
+      
+      updateSelectInput(session, "ColourBy", choices = dataColors())
       df = dataInput()
-      cnames = levels(df$cnames)
       
-      whatx = reactive({
-        name = ifelse (input$X == "", cnames[1], input$X)
-        data = df %>% filter(cnames == name) %>% arrange(.ri, .ci)
-        return(data$.y)
+      layer1 = reactive({
+        labs = colnames(df)[dim(df)[2]-1]
+        df %>% 
+          filter(.axisIndex == 0) %>%
+          dplyr::distinct(.ri, across(any_of(labs)), .keep_all = TRUE)
       })
       
-      whaty = reactive({
-        name = ifelse (input$Y == "", cnames[1], input$Y)
-        data = df %>% filter(cnames == name) %>% arrange(.ri, .ci)
-        return(data$.y)
+      layer2 = reactive({
+        labs = colnames(df)[dim(df)[2]]
+        df %>%
+          filter(.axisIndex == 1) %>%
+          dplyr::distinct(.ci, across(any_of(labs)), .keep_all = TRUE)
       })
       
-      whatz = reactive({
-        name = ifelse (input$Z == "", cnames[1], input$Z)
-        data = df %>% filter(cnames == name) %>% arrange(.ri, .ci)
-        return(data$.y)
+      scores = reactive({
+        layer1() %>%
+          reshape2::acast(.ci ~ .ri, value.var = ".y") %>%
+          scale() %>%
+          as.data.frame()
       })
       
-      whatclr = reactive({
-        data = df %>% filter(cnames == cnames[1]) %>% 
-          arrange(.ri, .ci) %>%
+      loadings = reactive({
+        layer2() %>%
+          reshape2::acast(.ri ~ .ci, value.var = ".y") %>%
+          #t() %>%
+          scale() %>%
+          #t() %>%
+          as.data.frame()
+        
+      })
+      
+      scores2plot = reactive({
+        S = scores()
+        cols = colnames(S)
+        S %>%
+          select( X = any_of(cols[input$X.comp]), Y = any_of(cols[input$Y.comp]))
+      })
+      
+      loadings2plot = reactive({
+        L = loadings()
+        cols = colnames(L)
+        L %>%
+          select( X = any_of(cols[input$X.comp]), Y = any_of(cols[input$Y.comp]))
+      })
+      
+      plotColors = reactive({
+        layer1() %>%
+          mutate(ri = as.factor(.ri)) %>%
+          filter(ri == levels(ri)[1]) %>%
           select(clr = all_of(input$ColourBy))
-        return(data$clr)
       })
       
-      xyz = reactive({
-        xyz = data.frame(X = whatx(), Y = whaty(), Z = whatz(), clr = whatclr())
+      scoreLabs = reactive({
+        ldf = layer1()
+        cols = colnames(ldf)
+        ldf = ldf %>%
+          mutate(ri = as.factor(.ri)) %>%
+          filter(ri == levels(ri)[1]) %>%
+          select(lbs = all_of(cols[length(cols)-1]))
+        
       })
+      
+      nComp = dim(scores())[2]
+      updateNumericInput(session, "X.comp", max = nComp)
+      updateNumericInput(session, "Y.comp", max = nComp)
       
       output$sp <- renderPlotly({
-        plot.df = xyz()
-        fig = plot_ly(plot.df, x = ~X, y = ~Y, z = ~Z ,color = ~clr)
-        fig = fig %>% add_markers()
+        if(input$ColourBy != ""){
+          fig = scores2plot() %>%
+            bind_cols(plotColors()) %>%
+            bind_cols(scoreLabs()) %>%
+            plot_ly( x = ~X, y = ~Y, color = ~ clr, text = ~ lbs) %>%
+            add_markers(marker = list(size = input$scsize))
+          ldf = loadings2plot()
+          fig %>%  
+            add_markers(x=ldf$X, y = ldf$Y, inherit = FALSE, showlegend = FALSE, marker = list(size = 4, color = "gray"))
+          
+        }
       })
       
     })
   })
 
+# L = df %>% filter(.axisIndex == 1) %>%
+#   reshape2::acast(.ri ~ .ci, value.var = ".y")
+
 getValues <- function(session){
   ctx <- getCtx(session)
   df <- ctx %>% 
-    select(.y, .ri, .ci)
+    select(.y, .ri, .ci, .axisIndex)
+  
+  if (!(df %>% summarise(unique(.axisIndex)) %>% dim())[1] == 2){
+    stop("Define exactly 2 layers for loadings and scores")
+  }
+  if (length(ctx$labels) != 2) stop("Add exactly 1 label for each layer")
   if(length(ctx$colors)) df = df %>% bind_cols(ctx$select(ctx$colors))
   if(length(ctx$labels)) df = df %>% bind_cols(ctx$select(ctx$labels))
   
-  cnames = ctx$cselect()[[1]]
-  updateSelectInput(session, "X", choices = cnames, selected = cnames[1])
-  updateSelectInput(session, "Y", choices = cnames, selected = cnames[2])
-  updateSelectInput(session, "Z", choices = cnames, selected = cnames[3])
-  updateSelectInput(session, "ColourBy", choices = unlist(ctx$colors))
-  
-  df = df %>% 
-    left_join(data.frame(.ci = 0:(length(cnames)-1), cnames), by = ".ci") %>%
-    mutate( across(!where(is.numeric), as.factor)) 
   return(df)
 }
+
+getColors <- function(session){
+  ctx <- getCtx(session)
+  ctx$colors %>%
+    unlist()
+}
+
+
+
+
+
+
 

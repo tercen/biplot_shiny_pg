@@ -1,7 +1,7 @@
 {
-  "name": "Scatter 3D",
-  "description": "Shiny operator to an interactive 3D scatter plot",
-  "tags": ["template"],
+  "name": "biplot operator",
+  "description": "Shiny operator to create a biplot",
+  "tags": ["multivariate visualization"],
   "authors": ["Rik de Wijn"],
-  "urls": ["https://github.com/rdewijn/tercen_scatter3d.git"]
+  "urls": ["https://github.com/tercen/biplot_shiny_operator.git"]
 }

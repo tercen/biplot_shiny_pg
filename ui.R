@@ -4,13 +4,13 @@ library(tidyr)
 
 ui = shinyUI(fluidPage(
   
-  titlePanel("Scatter 3D"),
+  titlePanel("Bipllot"),
   
   sidebarPanel(
-    selectInput("X", "X", choices = ""),
-    selectInput("Y", "Y", choices = ""),
-    selectInput("Z", "Z", choices = ""),
-    selectInput("ColourBy", "Colour by", choices = ""),
+    numericInput("X.comp", "X component", value =1, min = 1, max = 5, step = 1),
+    numericInput("Y.comp", "Y component",  value = 2, min = 1, max = 5, step = 1),
+    selectInput("ColourBy", "Colour markers by", choices = ""),
+    sliderInput("scsize", "Marker Size",min = 0, max = 24, step = 2, value = 10),
     width = 3
   ),
   mainPanel(

@@ -8,6 +8,6 @@ source("ui.R")
 source("server.R")
 
 options("tercen.workflowId"= "8f17d834dda49eba43ac822ed600aa7b")
-options("tercen.stepId"= "706ac7cf-8dd6-41a9-83a7-b5802ea67031")
+options("tercen.stepId"= "99f3f30b-9f0e-4ea8-aba9-c611c2248aef")
 
 runApp(shinyApp(ui, server))  
