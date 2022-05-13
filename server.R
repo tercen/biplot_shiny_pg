@@ -95,24 +95,47 @@ server <- shinyServer(
           mutate(ri = as.factor(.ri)) %>%
           filter(ri == levels(ri)[1]) %>%
           select(lbs = all_of(cols[length(cols)-1]))
-        
+      })
+      
+      labs = reactive({
+        ldf = layer2()
+        cols = colnames(ldf)
+        ldf %>%
+          mutate(ci = as.factor(.ci)) %>%
+          filter(ci == levels(ci)[1]) %>%
+          select(lbs = all_of( cols[length(cols)] )) %>%
+          as.vector()
       })
       
       nComp = dim(scores())[2]
       updateNumericInput(session, "X.comp", max = nComp)
       updateNumericInput(session, "Y.comp", max = nComp)
       
+      nVar = dim(labs())[1]
+      if (nVar > 10){
+        updateCheckboxInput(session, "showlines", value = FALSE)
+        updateSliderInput(session, "lbsize", value = 8)
+      }
+      
       output$sp <- renderPlotly({
         if(input$ColourBy != ""){
           fig = scores2plot() %>%
             bind_cols(plotColors()) %>%
             bind_cols(scoreLabs()) %>%
-            plot_ly( x = ~X, y = ~Y, color = ~ clr, text = ~ lbs) %>%
-            add_markers(marker = list(size = input$scsize))
-          ldf = loadings2plot()
-          fig %>%  
-            add_markers(x=ldf$X, y = ldf$Y, inherit = FALSE, showlegend = FALSE, marker = list(size = 4, color = "gray"))
+            plot_ly( x = ~X, y = ~Y, color = ~ clr, text = ~ lbs) 
           
+          ldf = loadings2plot()
+          
+          if(input$showlines){
+            fig = fig %>%
+              add_segments(x = 0, xend = ldf$X, y = 0, yend = ldf$Y, line = list(color = 'gray', width = input$lnsize),inherit = FALSE, showlegend = FALSE)
+          }
+          if(input$showlabels){
+            fig = fig %>%
+              add_text(x=ldf$X, y = ldf$Y,text = labs()$lbs, textfont = list(color = "gray", size = input$lbsize), inherit = FALSE, showlegend = FALSE)
+          }
+          fig %>%
+            add_markers(marker = list(size = input$scsize))
         }
       })
       
