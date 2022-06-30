@@ -12,10 +12,11 @@ ui = shinyUI(fluidPage(
       sliderInput("scsize", "Marker Size",min = 0, max = 24, step = 2, value = 10),
     ),
     wellPanel(
+      sliderInput("maxloadings","Max # of loadings to plot", min = 1, max = 10, step = 1, value = 10),
       checkboxInput("showlines","Show loadings as lines", TRUE),
       sliderInput("lnsize", "Line Size", min = 0, max = 5, step =  .5, value = 1),
       checkboxInput("showlabels","Show loadings as labels", TRUE),
-      sliderInput("lbsize", "Label Size", min = 0, max = 24, step=  2, value = 16),
+      sliderInput("lbsize", "Label Size", min = 0, max = 24, step=  2, value = 12),
     ),
     width = 3
   ),

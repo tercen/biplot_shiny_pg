@@ -67,6 +67,16 @@ server <- shinyServer(
         
       })
       
+      labs = reactive({
+        ldf = layer2()
+        cols = colnames(ldf)
+        ldf %>%
+          mutate(ci = as.factor(.ci)) %>%
+          filter(ci == levels(ci)[1]) %>%
+          select(lbs = all_of( cols[length(cols)] )) %>%
+          as.vector()
+      })
+      
       scores2plot = reactive({
         S = scores()
         cols = colnames(S)
@@ -78,7 +88,12 @@ server <- shinyServer(
         L = loadings()
         cols = colnames(L)
         L %>%
-          select( X = any_of(cols[input$X.comp]), Y = any_of(cols[input$Y.comp]))
+          select( X = any_of(cols[input$X.comp]), Y = any_of(cols[input$Y.comp])) %>%
+          mutate(D = X^2 + Y^2, VAR = labs()$lbs) %>%
+          arrange(-D) %>%
+          mutate(nVar = 1:n()) %>%
+          filter(nVar <= input$maxloadings) %>%
+          select(X,Y,VAR)
       })
       
       plotColors = reactive({
@@ -97,42 +112,29 @@ server <- shinyServer(
           select(lbs = all_of(cols[length(cols)-1]))
       })
       
-      labs = reactive({
-        ldf = layer2()
-        cols = colnames(ldf)
-        ldf %>%
-          mutate(ci = as.factor(.ci)) %>%
-          filter(ci == levels(ci)[1]) %>%
-          select(lbs = all_of( cols[length(cols)] )) %>%
-          as.vector()
-      })
-      
       nComp = dim(scores())[2]
       updateNumericInput(session, "X.comp", max = nComp)
       updateNumericInput(session, "Y.comp", max = nComp)
       
       nVar = dim(labs())[1]
-      if (nVar > 10){
-        updateCheckboxInput(session, "showlines", value = FALSE)
-        updateSliderInput(session, "lbsize", value = 8)
-      }
+      updateSliderInput(session, "maxloadings", max = nVar, value = min(10, nVar))
       
       output$sp <- renderPlotly({
         if(input$ColourBy != ""){
           fig = scores2plot() %>%
             bind_cols(plotColors()) %>%
             bind_cols(scoreLabs()) %>%
-            plot_ly( x = ~X, y = ~Y, color = ~ clr, text = ~ lbs) 
+            plot_ly( x = ~X, y = ~Y, split = ~ clr, text = ~ lbs) 
           
           ldf = loadings2plot()
-          
+
           if(input$showlines){
             fig = fig %>%
               add_segments(x = 0, xend = ldf$X, y = 0, yend = ldf$Y, line = list(color = 'gray', width = input$lnsize),inherit = FALSE, showlegend = FALSE)
           }
           if(input$showlabels){
             fig = fig %>%
-              add_text(x=ldf$X, y = ldf$Y,text = labs()$lbs, textfont = list(color = "gray", size = input$lbsize), inherit = FALSE, showlegend = FALSE)
+              add_text(x=ldf$X, y = ldf$Y,text = ldf$VAR, textfont = list(color = "gray", size = input$lbsize), inherit = FALSE, showlegend = FALSE)
           }
           fig %>%
             add_markers(marker = list(size = input$scsize))
