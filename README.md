@@ -8,6 +8,9 @@ A biplot is typically used to show both the scores and loadings of a Principal C
 
 ##### Usage
 - Use in Tercen is somewhat involved as two layers of data must be added to the cross tab view. See: https://tercen.com/Rik/w/02c1a6dfed523f30e97c03be927d6979
+![image](https://user-images.githubusercontent.com/36480607/178115142-7b098f70-c15b-4457-b04a-6871a1c9ec00.png)
+
+
 - Set the layer selector to `All` before switching to the `Operator View`
 
 Input projection Layer 1|.
