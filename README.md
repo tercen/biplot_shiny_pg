@@ -29,4 +29,7 @@ Output relations|.
 `Operator view`        | Interactive biplot application, Set the layer selector to `All` before switching to the `Operator View`
 
 
-Screen shot: https://github.com/tercen/biplot_shiny_operator/blob/master/biplotss.png
+##### Screen shot:
+
+![image](https://user-images.githubusercontent.com/36480607/178115236-68830e32-3c93-4415-8e7a-8b3233b3c0a8.png)
+
