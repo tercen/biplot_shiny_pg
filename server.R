@@ -108,7 +108,7 @@ server <- shinyServer(
       updateSliderInput(session, "maxloadings", max = nVar, value = min(10, nVar))
       
       output$sp <- renderPlotly({
-        if(input$ColourBy != ""){
+        if(TRUE){
           fig = scores() %>%
             plot_ly( x = ~X, y = ~Y, split = ~clr, text = ~ sclb) 
           ldf = loadings()
