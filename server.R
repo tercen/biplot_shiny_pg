@@ -32,8 +32,10 @@ server <- shinyServer(
     
     
     observe({
+      if(input$ColourBy == "") {
+        updateSelectInput(session, "ColourBy", choices = dataColors())
+      }
       
-      updateSelectInput(session, "ColourBy", choices = dataColors())
       df = dataInput()
       
       plotColors = reactive({
@@ -100,11 +102,15 @@ server <- shinyServer(
           select(ldlb, X, Y)
       })
       
+  
+      
       nComp = dim(scores())[2]
       updateNumericInput(session, "X.comp", max = nComp)
       updateNumericInput(session, "Y.comp", max = nComp)
       
+      
       nVar = dim(lx())[1]
+
       updateSliderInput(session, "maxloadings", max = nVar, value = min(10, nVar))
       
       output$sp <- renderPlotly({
